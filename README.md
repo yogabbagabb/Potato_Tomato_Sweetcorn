@@ -4,8 +4,8 @@ This library contains code to analyze potato, tomato and sweetcorn yield data. I
 
 * Preprocesses and cleans raw data
 * Checks if the data obeys assumptions that were used to create prediction functions.
-* Constructs models of preprocessed/cleaned data and saves the resultant predictions.
-* Constructs visualizations using these predictions.
+* Constructs models of preprocessed/cleaned data and saves them.
+* Constructs visualizations using these models.
 
 ## Getting Started
 
