@@ -9,7 +9,7 @@ This library contains code to analyze potato, tomato and sweetcorn yield data. I
 
 ## Getting Started
 
-This library is self-contained. You do not need to add anything to it to use it. Importantly, it already contains the CSV data that Aahan Agrawal was passed around the beginning of August to model the titular crops.
+This library is self-contained. You do not need to add anything to it to use it. Importantly, it already contains the CSV data that Aahan Agrawal was passed around the beginning of August to model the titular crops. **Please read the wiki to understand how to use the code in this library.**
 
 ### Prerequisites
 
