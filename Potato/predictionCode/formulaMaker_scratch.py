@@ -1,5 +1,18 @@
 
 def addFixedEffects(desiredComponents, formulaString=""):
+    '''
+    Given a list of variants of predictors to add, render them into a model
+    configuration string for use in Python or R, by interleaving the strings of
+    variants with "+"
+
+    param desiredComponents: An iterable of strings of variants of predictors to make
+    a model configuration from
+    param: An existing model configuration string (formula string) to append to
+
+    return: The result of appending the passed in string with the formula string
+    obtained by rendering variants in desiredComponents into a string
+    '''
+
     theLength = len(desiredComponents)
     formulaString = "yield_ana ~ "
     for counter, component in enumerate(desiredComponents):

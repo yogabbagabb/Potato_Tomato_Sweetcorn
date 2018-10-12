@@ -5,12 +5,12 @@ import os
 homePath = os.getcwd()
 
 
-# After specifying the rmse csv files, this simple function calculates the median for each
-# set of files
 def printRMSEMedian():
-    # csvFiles = ["vpd_tave_rmse.csv", "precip_evi_rmse.csv", "tave_evi_rmse.csv",
-            # "vpd_evi_rmse.csv", "tave_precip_rmse.csv", "vpd_precip_rmse.csv"]
-    # csvFiles = ["vpd_evi_tave_nested_rmse_loo_square.csv","vpd_evi_tave_nested_rmse_loo_square_2.csv", "tave_vpd_evi_rmse_loo_square.csv"]
+    '''
+    After specifying the rmse csv files (ie those files in which we stored the rmses of 
+    function predictions), calculate and print the median for each
+    set of files
+    '''
     csvFiles = ["tave_evi_squared_rmse.csv"]
 
     for file in csvFiles:
@@ -19,6 +19,16 @@ def printRMSEMedian():
         print(A.median())
 
 def calculateR2Python(csvFiles):
+    '''
+    Background: Yan's python prediction code saved predictions into a column called
+    "Predicted_yield_ana." Other code then compared these predictions with entries in a column
+    called "yield_ana" in order to compute statistics like RMSE, R^2 etc. This function
+    performs these computations and prints the resulting statistics for a passed in
+    set of filenames that correspond to csvs obtained from, among other sources, performing predictions using
+    Yan's prediction code. Really, these csvs can have been obtained from anywhere; they must have a "Predicted_yield_ana" field and a "yield_ana" field.
+
+    param: csvFiles: An iterable consisting of strings of csv file names; in these csvs predicted yields have been stored.
+    '''
     for aFile in csvFiles:
         modelFrame = pd.read_csv(aFile)
         # Get the column names from the data frame
@@ -54,6 +64,19 @@ def calculateR2Python(csvFiles):
             print(result.median()['R2'])
 
 def calculateR2(csvFiles):
+    '''
+    Background: Aahan's prediction code saved predictions for a certain model into a column
+    with the same name of the model. Note that Aahan's predictions were "predicted_yield"
+    and not "predicted_yield_ana" -- that is, his R code adds back the yield anomaly.
+
+    Other code then compared these predictions with entries in a columnk
+    called "yield" in order to compute statistics like RMSE, R^2 etc. This function
+    performs these computations and prints the resulting statistics for a passed in
+    set of filenames that correspond to csvs obtained from, among other sources, performing predictions using
+    Aahan's R prediction code. Really, these csvs can have been obtained from anywhere; they must have only predicted total yields in columns starting at the 7th (counting off from 0) index and a "yield" field.
+
+    param: csvFiles: An iterable consisting of strings of csv file names; in these csvs predicted yields have been stored.
+    '''
     indexOfFirstModel = 7
     for aFile in csvFiles:
         modelFrame = pd.read_csv(aFile)
@@ -91,108 +114,6 @@ def calculateR2(csvFiles):
 
 
 
-# def calculateR2Emergency(csvFiles):
-    # indexOfFirstModel = 1
-    # for aFile in csvFiles:
-        # modelFrame = pd.read_csv(aFile)
-        # # Get the column names from the data frame
-        # colNames = list(modelFrame)
-        # model = colNames[indexOfFirstModel]
-
-        # result = pd.DataFrame(np.full([modelFrame['year'].unique().shape[0],3], np.nan), index=modelFrame['year'].unique(), columns=['R2','rmse','R2_classic'])
-
-        # for y in range(modelFrame['year'].min(), modelFrame['year'].max()+1):
-            # con = modelFrame['year']==y
-            # yieldType = "yield_rainfed_ana"
-            # r2_temp = modelFrame.loc[con,[yieldType, \
-                                    # model]].corr() \
-                # [model][0]**2
-            
-            # # N is the sample number after removing nan
-            # N = modelFrame.loc[con,[yieldType,model]].dropna().shape[0]
-            # rmse_temp = (((modelFrame.loc[con, model] -  \
-                              # modelFrame.loc[con, yieldType])**2).sum() \
-                                          # /N)**0.5
-                                      # #    /modelFrame.loc[con,yieldType].shape[0])**0.5
-                         
-    # #                                       /modelFrame.loc[con,model].shape[0])**0.5
-
-            # sst = ((modelFrame.loc[con, yieldType] \
-                    # - modelFrame.loc[con, yieldType].mean())**2).sum()
-            # sse = ((modelFrame.loc[con, yieldType] - modelFrame.loc[con, model])**2).sum()
-
-            # result.loc[y] = [r2_temp, rmse_temp, 1-sse/sst]
-        # print(model)
-        # # print(result)
-        # print(result)
-        # statsCSV = "./statsDirectory/" + str(aFile) + "_stats.csv"
-        # result.to_csv(statsCSV)
-        # print(result.median()['rmse'])
-        # print(result.median()['R2'])
-
-# def calculateR2EmergencyYan(csvFiles):
-    # for aFile in csvFiles:
-        # modelFrame = pd.read_csv(aFile)
-        # # Get the column names from the data frame
-        # colNames = list(modelFrame)
-        # model = "Predicted_yield_rainfed_ana"
-
-        # result = pd.DataFrame(np.full([modelFrame['year'].unique().shape[0],3], np.nan), index=modelFrame['year'].unique(), columns=['R2','rmse','R2_classic'])
-
-        # for y in range(modelFrame['year'].min(), modelFrame['year'].max()+1):
-            # con = modelFrame['year']==y
-            # yieldType = "yield_rainfed_ana"
-            # r2_temp = modelFrame.loc[con,[yieldType, \
-                                    # model]].corr() \
-                # [model][0]**2
-            
-            # # N is the sample number after removing nan
-            # N = modelFrame.loc[con,[yieldType,model]].dropna().shape[0]
-            # rmse_temp = (((modelFrame.loc[con, model] -  \
-                              # modelFrame.loc[con, yieldType])**2).sum() \
-                                          # /N)**0.5
-                                      # #    /modelFrame.loc[con,yieldType].shape[0])**0.5
-                         
-    # #                                       /modelFrame.loc[con,model].shape[0])**0.5
-
-            # sst = ((modelFrame.loc[con, yieldType] \
-                    # - modelFrame.loc[con, yieldType].mean())**2).sum()
-            # sse = ((modelFrame.loc[con, yieldType] - modelFrame.loc[con, model])**2).sum()
-
-            # result.loc[y] = [r2_temp, rmse_temp, 1-sse/sst]
-        # print(model)
-        # # print(result)
-        # print(result)
-        # print(result.median()['rmse'])
-        # print(result.median()['R2'])
-
-# def calculateTotalYield():
-    # D = pd.read_csv("vpd_spline_evi_poly")
-    # D = D.loc[~pd.isnull(D["yield_rainfed"]),:]
-    # df = pd.DataFrame(index=[i for i in range(2003,2017,1)],columns=["Predicted National Rainfed Yield", "Actual National Rainfed Yield", "100 * (Predicted - Actual)/Actual"])
-    # df = df.fillna(0)
-    # for year in range(2003,2017,1):
-        # C = D.loc[D["year"] == year,:]
-        # predQuant = C["Predicted_yield_rainfed"]
-        # yieldQuant = C["yield_rainfed"]
-        # areaQuant = C["area_rainfed"]
-        # print(("{:,}".format(np.dot(yieldQuant, areaQuant)),"{:,}".format(np.dot(predQuant, areaQuant))))
-        # actualYield = np.dot(yieldQuant, areaQuant)
-        # predictedYield = np.dot(predQuant, areaQuant)
-        # actualYield_str = "{:,}".format(actualYield)
-        # predictedYield_str = "{:,}".format(predictedYield)
-        # df.loc[year,:] = predictedYield_str, actualYield_str, ((predictedYield/actualYield) - 1) * 100
-    # print(df)
-    # print(os.getcwd())
-    # df.to_csv("national_yield_stats.csv")
-
-# def printRelativeYield(csvFiles):
-    # os.chdir("../dataFiles")
-    # D = pd.read_csv("soybean_handled_dataset")
-    # yearRange = range(2003,2017,1)
-    # for aFile in csvFiles:
-        # for year in yearRange:
-            # E = D[D["year"] == year]
 
 
 if __name__ == "__main__":

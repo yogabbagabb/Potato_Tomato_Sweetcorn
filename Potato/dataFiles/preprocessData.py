@@ -8,16 +8,32 @@ import os
 homePath = os.getcwd()
 
 def yield_trend(df, yield_type='rainfed'):
-    # Estimate yield trend and detrend
+    '''
+    Detrend a data frame using some function (ie quadratic or linear).
+    param df: A raw data frame 
+    param yield_type: The type of yield that we wish to detrend on
+    '''
     trend_model_txt =  "Q('%s')"%"yield" + "~ np.power(year,2) + year"
     trend_results = smf.ols(trend_model_txt, data=df).fit()
     return trend_results
 
 def endueAnomaly(D, trend_results):
+    '''
+    Give a data frame a yield anomaly.
+    param D: A preprocessed data frame
+    param trend_results: The fitted yield_trend function
+    return: D, A preprocessed data frame with yield anomaly now defined
+    '''
     D["yield_ana"] = D["yield"] - trend_results.predict(D)
     return D
 
-def readFile():
+def preprocesData():
+    '''
+    Read the appropriate csv (depending on the crop we're examining) and preprocess it.
+    Then save it as "Crop Name"_with_anomaly.csv
+    return: The preprocessed data file
+    '''
+    # Get the file from the
     os.chdir("../")
     with open("csvNameFile.txt") as f:
         content = f.readlines()
@@ -25,6 +41,7 @@ def readFile():
     cropName = content[1].strip()
 
 
+    # After getting a string from a file in a different directory, change back to our directory
     os.chdir("../dataFiles")
     data = pd.read_csv(content[0].strip())
     os.chdir(homePath)
@@ -69,5 +86,5 @@ def readFile():
     return data
 
 if __name__ == "__main__":
-    D = readFile()
+    D = preprocesData()
     

@@ -1,5 +1,19 @@
 
-def addFixedEffects(desiredComponents, formulaString=""):
+def addFixedEffects_excl(desiredComponents, formulaString=""):
+    '''
+    Using only months months from may to august, create strings for certain
+    predictors for use in model with fixed effects. Do NOT add linear terms
+    if we desire a quadratic effect.
+
+    param desiredComponents: The fixed effect predictors that we wish to use. See
+    terminology for an explanation of what I mean by "predictors."
+
+    param formulaString: A model configuration string that is being added to by this
+    function.
+
+    return: The concatenation of strings needed to express desiredComponents with
+    formulaString
+    '''
     theLength = len(desiredComponents)
     for counter, component in enumerate(desiredComponents):
         if component == "TAVE":
@@ -20,7 +34,22 @@ def addFixedEffects(desiredComponents, formulaString=""):
             formulaString += " + "
     return formulaString
 
-def addYanCombinations(desiredComponents, formulaString=""):
+def addFixedEffects(desiredComponents, formulaString=""):
+    '''
+    Using only months months from may to august, create strings for certain
+    predictors for use in model with fixed effects. Do add linear terms
+    if we desire a quadratic effect.
+
+    param desiredComponents: The fixed effect predictors that we wish to use. See
+    terminology for an explanation of what I mean by "predictors."
+
+    param formulaString: A model configuration string that is being added to by this
+    function.
+
+    return: The concatenation of strings needed to express desiredComponents with
+    formulaString
+    '''
+
     theLength = len(desiredComponents)
     for counter, component in enumerate(desiredComponents):
         if component == "TAVE":
@@ -47,11 +76,7 @@ def addYanCombinations(desiredComponents, formulaString=""):
 def printString(fixedEffects, randomStateEffects, randomStateFIPSEffects):
     formulaString = "\"yield_ana ~ "
     if (fixedEffects != []):
-        formulaString += addYanCombinations(fixedEffects)
-    if (randomStateEffects != []):
-        formulaString += " + " + addRandomStateEffects(randomStateEffects)
-    if (randomStateFIPSEffects != []):
-        formulaString += " + " + addRandomStateFIPSEffects(randomStateFIPSEffects)
+        formulaString += addFixedEffects(fixedEffects)
     formulaString += "\""
     print(formulaString)
 
@@ -60,11 +85,9 @@ if __name__ == "__main__":
     fixedEffects = [["VPD","PRECIP"],["VPD","PRECIP2"],["VPD2","PRECIP"],["VPD2","PRECIP2"],
     ["TAVE","PRECIP"],["TAVE","PRECIP2"],["TAVE2","PRECIP"],["TAVE2","PRECIP2"],
     ["TAVE","PRECIP","VPD"],["TAVE","PRECIP2","VPD"],["TAVE2","PRECIP","VPD"],["TAVE2","PRECIP2","VPD"],["TAVE","PRECIP","VPD2"],["TAVE","PRECIP2","VPD2"],["TAVE2","PRECIP","VPD2"],["TAVE2","PRECIP2","VPD2"]]
-    randomStateEffects = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]
-    randomStateFIPSEffects = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]
     for i in range(len(fixedEffects)):
         print()
-        printString(fixedEffects[i], randomStateEffects[i], randomStateFIPSEffects[i])
+        printString(fixedEffects[i])
         print()
 
     

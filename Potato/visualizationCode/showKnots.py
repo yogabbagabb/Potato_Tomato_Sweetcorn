@@ -14,26 +14,41 @@ homePath = os.getcwd()
 
 
 def load_yield_data():
+    # Get the name of the crop we wish to examine
     os.chdir("../")
     with open("csvNameFile.txt") as f:
         content = f.readlines()
     os.chdir(homePath)
     cropName = content[1]
+
+    # Load the preprocessed data that we wish to examine
     data = pd.read_csv("../dataFiles/" + cropName + "_with_anomaly.csv",dtype={'FIPS':str})
     return data
 
 def printOffByOne():
+    '''
+    Depict the knots appearing on a lowess curve for hardcoded variants of predictors
+    one at a time, so that we can look at them more clearly.
+    '''
     data = load_yield_data()
     numberColumns = 5
+
+    # Define the first and lst string that will appear in an array of variables that
+    # we wish to visualize lowess curves + knots for
     firstEntry = 'tmax5'
     lastEntry = 'precip9'
     colNames = list(data)
+    # Get the corresponding indices (in the columns of hte data frame)
+    # for the first and last string appearing in aforementioned
+    # array of variables
     firstIndex =colNames.index(firstEntry)
     lastIndex = colNames.index(lastEntry)
     numberTypesOfVariables = 5
     months = 5
+    # Specify the variables that week to plot knots atop lowess curves for
     variables = ['tave5', 'tave6', 'tave7', 'tave8', 'tave9', 'vpdave5', 'vpdave6', 'vpdave7', 'vpdave8', 'vpdave9', 'precip5', 'precip6', 'precip7', 'precip8', 'precip9']
 
+    # Specify the knots ((x,y) coordinates) of the selected predictors
     tave5Knots = [(11.433,117.610),(13.5398,-14.5927),(15.5924,-12.5801),(20.123,-115.226)]
     tave6Knots = [(15.434,21.635),(20.7844,-26.6687),(25.129,-127.302)]
     tave7Knots = [(19.730,-10.567),(21.224,-0.504),(23.179,-10.567),(27.604,-131.327)]
@@ -80,24 +95,35 @@ def printOffByOne():
 
 
 def printAll():
+    '''
+    Depict all lowess curves for hardcoded variants of predictors
+    in one visualization, so that we can look at them more clearly.
+    '''
     data = load_yield_data()
     numberColumns = 5
+    # Define the first and lst string that will appear in an array of variables that
+    # we wish to visualize lowess curves + knots for
     firstEntry = 'tmax5'
     lastEntry = 'lstmax9'
     colNames = list(data)
+    # Get the corresponding indices (in the columns of hte data frame)
+    # for the first and last string appearing in aforementioned
     firstIndex =colNames.index(firstEntry)
     lastIndex = colNames.index(lastEntry)
     numberTypesOfVariables = 5
     months = 5
     f, axarr = plt.subplots(numberTypesOfVariables, months)
+    # Specify the variables that week to plot knots atop lowess curves for
     variables = ['tave5', 'tave6', 'tave7', 'tave8', 'tave9', 'vpdave5', 'vpdave6', 'vpdave7', 'vpdave8', 'vpdave9', 'precip5', 'precip6', 'precip7', 'precip8', 'precip9', 'evi5', 'evi6', 'evi7', 'evi8', 'evi9', 'lstmax5', 'lstmax6', 'lstmax7', 'lstmax8', 'lstmax9']
-    print(firstIndex, lastIndex)
+    # Print all lowess curves in one panoramic diagram
     print(colNames)
     for i in range(len(variables)):
             axarr[int(i/numberColumns), int(i%numberColumns)].plot(data[variables[i]], data["yield_rainfed_ana"],'bx')
             axarr[int(i/numberColumns), int(i%numberColumns)].set_title([variables[i]])
             Z = lowess(data['yield_rainfed_ana'], data[variables[i]],frac=0.3,it=3)
             axarr[int(i/numberColumns), int(i%numberColumns)].plot(Z[:,0], Z[:,1], 'g-', lw=5)
+
+    # TODO: Figure out what this code does:
     # for i in range(firstIndex, lastIndex - firstIndex + 1):
         # if (colNames[firstIndex+i] in variables):
             # print(i)

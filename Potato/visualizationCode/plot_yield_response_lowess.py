@@ -7,12 +7,14 @@ import os
 lowess = sm.nonparametric.lowess
 homePath = os.getcwd()
 
-# Load data
+# Get the name of the crop that we wish to analyze
 os.chdir("../")
 with open("csvNameFile.txt") as f:
     content = f.readlines()
 os.chdir(homePath)
 cropName = content[1].strip()
+
+# Depending on the crop name, define the path where the preprocessed data we seek exists.
 dataLocation = ""
 if (cropName == "potato"):
     dataLocation = '../dataFiles/potato_with_anomaly.csv'
@@ -21,6 +23,7 @@ if (cropName == "tomato"):
 if (cropName == "sweetcorn"):
     dataLocation = '../dataFiles/sweetcorn_with_anomaly.csv'
 
+# Read the data
 data = pd.read_csv(dataLocation,dtype={'FIPS':str})
 
 # Add logical filter to the yield Data
@@ -44,6 +47,7 @@ con = data['year']>1980
 #con = data['year']>2015
 
 
+# Plot the lowess curves
 numberMonths = 5
 variableTypes = 4
 fig, axes = plt.subplots(numberMonths, variableTypes, figsize=(12,6))
@@ -78,7 +82,8 @@ axes[4,-1].text(1.05,0.5,'September',transform=axes[4,-1].transAxes, fontsize=12
 axes[1,0].text(-0.4,0.7,'Yield Anomaly (t/ha)',transform=axes[1,0].transAxes, 
                fontsize=10,rotation=90)
 
-# Add knots
+# Add knots. The code below is just a sample of whata dding knots would require.
+# It is not functional code that is useful for our analysis.
 
 # VPD
 # axes[1,0].text(1,0.925,'knots: 6.825,11.975,21.124',transform=axes[1,0].transAxes, 
@@ -109,7 +114,5 @@ axes[1,0].text(-0.4,0.7,'Yield Anomaly (t/ha)',transform=axes[1,0].transAxes,
 
 plt.subplots_adjust(top=0.95, bottom=0.05, left=0.075, right=0.925, hspace=0.3)
 
-# # plt.xticks(range(5,30,2))
-# # plt.xticks(range(0,400,25))
 plt.savefig('./figures/figure_yield_response_lowess.png')
 print('figure saved')

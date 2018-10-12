@@ -9,15 +9,17 @@ import os
 homePath = os.getcwd()
 
 def readFile():
+    '''
+    Read the csv storing the predictions that yan desired into a data frame
+    and return it.
+    '''
     os.chdir("../")
     with open("csvNameFile.txt") as f:
         content = f.readlines()
     os.chdir(homePath)
 
 
-    os.chdir("../dataFiles")
     cropName = content[1].strip()
-    os.chdir(homePath)
     os.chdir("../dataFiles/predictionResultFrames")
     D = pd.read_csv("yan_combinations_"+cropName+".csv")
     os.chdir(homePath)
@@ -28,9 +30,14 @@ def readFile():
 
 if __name__ == "__main__":
     data = readFile()
+    # Define the first index of a column containing prediction data
     firstIndex = 7
+    # Define the last index of a column containing prediction data
     lastIndex = firstIndex + 16
     colNames = list(data)
+    # Plot the actual yield versus predicted yield for each model configuration
+    # that falls between firstIndex and lastIndex (inclusive of endpoints) in the
+    # csv called data. Save the resulting figure into a folder figures/scatterPlots/.
     for i in range(firstIndex, lastIndex):
         plt.scatter(data["yield"],data[colNames[i]],label=None)
         plt.xlabel("Actual Yield")
