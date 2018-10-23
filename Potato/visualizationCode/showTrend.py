@@ -53,7 +53,6 @@ if __name__ == "__main__":
     plt.title("Yield-Year Relationship for " + cropName)
     # sampleYears = pd.DataFrame([years for years in range(1997,2010)], index = "years")
     plt.plot(D["year"], trend_results.predict(D),'r-')
-    print(D.loc[D["yield"] > 3000, :])
     plt.show()
 
     # Dprime = endueAnomaly(D, trend_results)

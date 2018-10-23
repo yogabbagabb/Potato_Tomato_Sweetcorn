@@ -55,6 +55,7 @@ if __name__ == "__main__":
 
         plt.savefig('figures/scatterPlots/scatter_plot_yield_against_%s'%colNames[i])
 
+        # Clear the plot so that we have a blank canvas for another plot.
         plt.clf()
 
 

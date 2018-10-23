@@ -19,7 +19,7 @@ def load_yield_data():
     with open("csvNameFile.txt") as f:
         content = f.readlines()
     os.chdir(homePath)
-    cropName = content[1]
+    cropName = content[1].strip("\n").strip("\t")
 
     # Load the preprocessed data that we wish to examine
     data = pd.read_csv("../dataFiles/" + cropName + "_with_anomaly.csv",dtype={'FIPS':str})
@@ -74,8 +74,6 @@ def printOffByOne():
 
     # container = [vpdave6Knots, vpdave7Knots, vpdave8Knots, precip6Knots, precip7Knots, precip8Knots, precip9Knots]
     container = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]
-    print(firstIndex, lastIndex)
-    print(colNames)
     for i in range(len(variables)):
         plt.plot(data[variables[i]], data["yield_ana"],'bx')
         plt.title([variables[i]])
@@ -116,22 +114,13 @@ def printAll():
     # Specify the variables that week to plot knots atop lowess curves for
     variables = ['tave5', 'tave6', 'tave7', 'tave8', 'tave9', 'vpdave5', 'vpdave6', 'vpdave7', 'vpdave8', 'vpdave9', 'precip5', 'precip6', 'precip7', 'precip8', 'precip9', 'evi5', 'evi6', 'evi7', 'evi8', 'evi9', 'lstmax5', 'lstmax6', 'lstmax7', 'lstmax8', 'lstmax9']
     # Print all lowess curves in one panoramic diagram
-    print(colNames)
     for i in range(len(variables)):
             axarr[int(i/numberColumns), int(i%numberColumns)].plot(data[variables[i]], data["yield_rainfed_ana"],'bx')
             axarr[int(i/numberColumns), int(i%numberColumns)].set_title([variables[i]])
             Z = lowess(data['yield_rainfed_ana'], data[variables[i]],frac=0.3,it=3)
             axarr[int(i/numberColumns), int(i%numberColumns)].plot(Z[:,0], Z[:,1], 'g-', lw=5)
 
-    # TODO: Figure out what this code does:
-    # for i in range(firstIndex, lastIndex - firstIndex + 1):
-        # if (colNames[firstIndex+i] in variables):
-            # print(i)
-            # axarr[int(i/numberColumns), int(i%numberColumns)].plot(data.iloc[:,firstIndex+i], data["yield_rainfed_ana"],'bx')
-            # axarr[int(i/numberColumns), int(i%numberColumns)].set_title(colNames[firstIndex+i])
-            # # data.loc[colNames[firstIndex+i]]
-            # Z = lowess(data['yield_rainfed_ana'], data[colNames[firstIndex+i]],frac=0.3,it=3)
-            # axarr[int(i/numberColumns), int(i%numberColumns)].plot(Z[:,0], Z[:,1], 'g-', lw=5)
+
     plt.show()
 
 if __name__ == "__main__":
