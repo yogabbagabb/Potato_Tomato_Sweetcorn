@@ -51,8 +51,6 @@ calculateRMSE = function(yield_prediction_csv,rmse_csv)
 
 
     for (year_idx in 1:numberYears){
-        # Print year - 2012 (for year in 2003 to lastTestingYear) to the console for our convenience
-        print(year_idx)
         # Get the test year
         test.year = year[pred.year[year_idx]]
 
@@ -82,64 +80,57 @@ calculateRMSE = function(yield_prediction_csv,rmse_csv)
     # Replaces its column names by the model_names, save it, and then print some statistics
     colnames(df) <- model_names
     write.csv(df, rmse_csv)
+    print("The RMSE data for all models:")
     print(df)
+    print("The median RMSE data for all models:")
     print(apply(df,2,median))
+    print("The mean RMSE data for all models:")
     print(apply(df,2,mean))
 }
 
 
 
-
-
-
-
-initialize = function()
+# Scale Numeric Data
+# param crop_data: A data frame with numeric columns.
+scaleData = function(crop_data)
 {
 
-    # CROP PARAMETER
-    mydata <- read.csv("../dataFiles/potato_with_anomaly.csv")
-    #mydata <- read.csv("../dataFiles/tomato_with_anomaly.csv")
+    # Get a boolean vector such that each index in the boolean vector represents
+    # whether the corrresponding column index in crop_data is numeric (TRUE) or not (FALSE)
+    ind <- sapply(crop_data, is.numeric)
+    # Set those column indices to FALSE that we don't want to scale.
+    ind["year"] <- FALSE
+    ind["State"] <- FALSE
+    ind["FIPS"] <- FALSE
+    ind["yield"] <- FALSE
+    # Scale the indices that are, firstly, numeric and, secondly, those that we want to scale.
+    crop_data[ind] <- scale(crop_data[ind])
+    return(crop_data)
+}
 
 
-    # Suppose that you wanted to scale the dataset in some way before working with it.
-    # To do so, we first store in a vector boolean values that indicate whether a column in mydata is true or false. What does it mean for a column to be True or False?
-    # If mydata has columns A,B,C,D and only D is numeric, then A,B and C will be False and D will be True
 
-    # If we want any numeric column to not be scaled, we then replace its boolean value with FALSE
+initialize = function(inputDataFile, outputYieldFile, outputStatsFile)
+{
 
-    #ind <- sapply(mydata, is.numeric)
-    #ind["year"] <- FALSE
-    #ind["State"] <- FALSE
-    #ind["FIPS"] <- FALSE
-    #ind["yield"] <- FALSE
-    #ind["yield"] <- FALSE
-    #ind["yield"] <- FALSE
-    #ind["soy_percent"] <- FALSE
-    #mydata[ind] <- scale(mydata[ind])
+    crop_data <- inputDataFile
 
-
-    # CROP PARAMETER
-    # The states that follow are those states that belong to potato
-    all_states <- c('COLORADO', 'IDAHO', 'MAINE', 'MINNESOTA', 'MONTANA', 'OREGON',
-     'WISCONSIN', 'WASHINGTON', 'PENNSYLVANIA', 'NORTH DAKOTA',
-     'ARIZONA', 'NEW JERSEY', 'NORTH CAROLINA', 'ALABAMA', 'MICHIGAN',
-     'NEW MEXICO', 'UTAH', 'VIRGINIA')
-    # The states that follow are those states that belong to tomato
-    #all_states <- c('CALIFORNIA','OHIO')
+    # Uncomment this if you want to scale the numeric columns of your data
+    # crop_data <- scaleData(crop_data)
 
 
 
     # Configure certain columns to be stored as categorical variables
-    mydata$FIPS = as.factor(mydata$FIPS)
-    mydata$State = as.factor(mydata$State)
+    crop_data$FIPS = as.factor(crop_data$FIPS)
+    crop_data$State = as.factor(crop_data$State)
 
 
     # Give names to the CSVs in which we will, firstly, store the results of predictions and, secondly, in which we will store the RMSEs that we calculate for these
     # predictions.
 
-    # CROP_PARAMETER
-    yield_prediction_csv_1 <- "./yan_combinations_potato.csv"
-    rmse_csv_1 <- "./yan_combinations_potato_rmse.csv"
+    yield_prediction_csv_1 <- outputYieldFile
+    rmse_csv_1 <- outputStatsFile
+
     #yield_prediction_csv_1 <- "./yan_combinations_tomato.csv"
     #rmse_csv_1 <- "./yan_combinations_tomato_rmse.csv"
 
@@ -217,56 +208,34 @@ initialize = function()
             stop("The length of model_formulas != length of model_names")
         }
 
-        for (model_idx in 1:length(model_formulas))
+        for (formula_idx in 1:length(model_formulas))
         {
             # Get the start time for a particular model_formula
             startTime <- Sys.time()
-            print(model_names[model_idx])
+            print(sprintf("We are running this model: %s", model_names[formula_idx]))
             # These are potato specific years
-            endYear <- year[length(year)]
-            startYear <- year[1]
             for (year_idx in 1:numberYears){
 
-                # training_years is the vector of years across which we will train our data
-                if (year_idx == 1)
-                {
-                    training_years <- c(startYear:2002, 2004:endYear)
-                }
-
-                else if (year_idx == numberYears)
-                {
-                    training_years <- startYear:year[pred.year[year_idx-1]]
-                }
-
-                else
-                {
-                    training_years <- c(startYear:year[pred.year[year_idx-1]], year[pred.year[year_idx+1]]:endYear)
-                }
-
-
-                print(year_idx)
-                print(training_years)
-                training_years <- training_years
+                print(sprintf("Performing LOO by excluding year %d", (year_idx + firstTestingYear)))
                 test.year = year[pred.year[year_idx]]
 
                 #data.train is the data frame containing the data with which we can possibly make our prediction
-                data.train = mydata[!(mydata$"year" %in% year[pred.year[year_idx]]),]
-                print(dim(data.train))
+                data.train = crop_data[!(crop_data$"year" %in% year[pred.year[year_idx]]),]
 
 
                 # data.test is the data frame containing the data used to test our model fit
-                data.test = mydata[mydata$"year" %in% test.year,]
+                data.test = crop_data[crop_data$"year" %in% test.year,]
 
 
                 # If the models use evi or lst, then refine the training and testing data frames to exclude those values
                 # such that evi or lst is null
-                if (uses_evi[model_idx] == "Y")
+                if (uses_evi[formula_idx] == "Y")
                 {
                     data.train <- data.train[!is.na(data.train$"evi5"),]
                     data.test <- data.test[!is.na(data.test$"evi5"),]
                 }
 
-                if (uses_lstmax[model_idx] == "Y")
+                if (uses_lstmax[formula_idx] == "Y")
                 {
                     data.train <- data.train[!is.na(data.train$"lstmax5"),]
                     data.test <- data.test[!is.na(data.test$"lstmax5"),]
@@ -285,20 +254,20 @@ initialize = function()
 
                 model_function <- NULL
 
-                if (fitting_functions[model_idx] == "lm")
+                if (fitting_functions[formula_idx] == "lm")
                 {
-                    model_function <- lm(as.formula(model_formulas[model_idx]), data=data.train)
+                    model_function <- lm(as.formula(model_formulas[formula_idx]), data=data.train)
 
                 }
-                else if (fitting_functions[model_idx] == "lmer")
+                else if (fitting_functions[formula_idx] == "lmer")
                 {
-                    model_function <- lmer(as.formula(model_formulas[model_idx]), data=data.train, control = lmerControl(optimizer ="Nelder_Mead"))
+                    model_function <- lmer(as.formula(model_formulas[formula_idx]), data=data.train, control = lmerControl(optimizer ="Nelder_Mead"))
                 }
 
 
                 # We want the testing data frame to only include those entries whose FIPS codes also occurred in the training data frame
                 # We additionally want those FIPS codes that not only occurred in the training data frame but whose yield entries were not null
-                if (uses_FIPS[model_idx] == "Y")
+                if (uses_FIPS[formula_idx] == "Y")
                 {
                     non_na_entries <- data.train[!(is.na(data.train$'yield')),]
                     data.test <- data.test[data.test$"FIPS" %in% non_na_entries$"FIPS",]
@@ -306,8 +275,10 @@ initialize = function()
 
 
 
-                # For the final year involved in prediction, we save some attributes. For example, we store the
-                # coefficients that the fitted function has and we make some diagnostic plots as well
+                # For the year (startingYear + 14) that we perform LOO prediction by excluding -- if this
+                # does indeed take place -- we save some attributes. For example, we store the
+                # coefficients of the fitted function and we make some diagnostic plots as well.
+                # If this year does not exist, then we do not make such plots.
                 if (year_idx == 14)
                 {
                     s <- capture.output(summary(model_function))
@@ -315,15 +286,20 @@ initialize = function()
                     coeff_mean <- capture.output(coef(summary(model_function)))
                     csv_name <- paste0(yield_prediction_csv)
                     csv_name <- substr(csv_name, 3, nchar(csv_name))
-                    #csv_name <- substr(csv_name, 1, nchar(csv_name) - 4)
-                    print(csv_name)
-                    write(s, paste0('./coefficients_', csv_name, model_names[model_idx],'.txt'), append=TRUE)
-                    write("\n_________________\n",paste0('./coefficients_', csv_name, model_names[model_idx],'.txt'), append=TRUE)
-                    write(coeff, paste0('./coefficients_', csv_name, model_names[model_idx],'.txt'), append=TRUE)
-                    write("\n_________________\n",paste0('./coefficients_', csv_name, model_names[model_idx],'.txt'), append=TRUE)
-                    write(coeff_mean, paste0('./coefficients_', csv_name, model_names[model_idx],'.txt'), append=TRUE)
-                    theFile <-  paste0(model_names[model_idx], "%03d.png")
-                    png(filename=theFile)
+
+                    # Make a name for the file where we will save the model attributes for the model
+                    # obtained by performing LOO prediction by excluding year 2016.
+
+                    diagnosticFileName <- paste0('./coefficients_', csv_name, model_names[formula_idx],'.txt')
+                    write(s, diagnosticFileName, append=TRUE)
+                    write("\n_________________\n",diagnosticFileName, append=TRUE)
+                    write(coeff, diagnosticFileName, append=TRUE)
+                    write("\n_________________\n",diagnosticFileName, append=TRUE)
+                    write(coeff_mean, diagnosticFileName, append=TRUE)
+
+                    # Make a name for the file where we will save a few plots
+                    plotFile <-  paste0(model_names[formula_idx], "%03d.png")
+                    png(filename=plotFile)
                     plot(model_function,ask=FALSE)
                     dev.off()
                 }
@@ -344,7 +320,7 @@ initialize = function()
 
                 # Assign to this previous variable the predictions obtained by predicting the model function on the test data frame
                 assign(paste0("func.pred",test.year), predict(model_function,get(paste0("data.test",test.year))))
-                #+ yearly.means[which(mydata[, 1] %in% test.year & mydata$State %in% test_region)])
+                #+ yearly.means[which(crop_data[, 1] %in% test.year & crop_data$State %in% test_region)])
 
 
             }
@@ -358,15 +334,15 @@ initialize = function()
 
             # CROP PARAMETER
             # Make one vector by binding together the results of predicting on test data frames from 2003 to 2016
-            predictions[[model_idx]] <- c(func.pred2003,func.pred2004,func.pred2005,func.pred2006,func.pred2007,func.pred2008, func.pred2009, func.pred2010, func.pred2011, func.pred2012, func.pred2013, func.pred2014, func.pred2015, func.pred2016)
-            predictionFrame <- data.frame(predictions[[model_idx]])
+            predictions[[formula_idx]] <- c(func.pred2003,func.pred2004,func.pred2005,func.pred2006,func.pred2007,func.pred2008, func.pred2009, func.pred2010, func.pred2011, func.pred2012, func.pred2013, func.pred2014, func.pred2015, func.pred2016)
+            predictionFrame <- data.frame(predictions[[formula_idx]])
 
 
-            # Combine the predictionFrame data frame with allTestData's data frame and then save it with the name model_name[model_idx]
+            # Combine the predictionFrame data frame with allTestData's data frame and then save it with the name model_name[formula_idx]
             # This is done because if this code executes to completion, then it saves a dataframe containing the prediction results for all tested models in the model
             # experiment; if the code fails to execute to completion however, failing at some model within the model experiment, then all previous models will have
             # been saved. Each of the previous models will have been saved to a data frame whose data frame name is the model name
-            write.csv(data.frame(predictionFrame, allTestData), model_names[[model_idx]])
+            write.csv(data.frame(predictionFrame, allTestData), model_names[[formula_idx]])
             endTime <- Sys.time()
             print(endTime - startTime)
 
@@ -393,7 +369,7 @@ initialize = function()
         # At present, our predictions are only for the yield anomaly
         # Now we need to add back the yield trend to get the actual yield prediction
 
-        trend_function <- lm(yield ~ year + I(year^2), data=mydata) # Use quadratic trends
+        trend_function <- lm(yield ~ year + I(year^2), data=crop_data) # Use quadratic trends
         yearly.means <- predict(trend_function, yield_prediction)
         for (i in 1:length(model_names))
         {
@@ -423,4 +399,10 @@ initialize = function()
 
 # Main method
 options(warn=1)
-initialize()
+
+#CROP PARAMETER
+crop_data_csv <- read.csv("../dataFiles/potato_with_anomaly.csv")
+#crop_data_csv <- read.csv("../dataFiles/tomato_with_anomaly.csv")
+yield_prediction_csv <- "./yan_combinations_potato.csv"
+rmse_csv <- "./yan_combinations_potato_rmse.csv"
+initialize(crop_data_csv, yield_prediction_csv, rmse_csv)
