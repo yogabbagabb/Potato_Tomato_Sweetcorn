@@ -1,3 +1,4 @@
+# Remove all objects from the current workspace.
 rm(list=ls())
 #Add desired packages
 require(lme4)
@@ -6,9 +7,10 @@ require(splines)
 require(magrittr)
 
 # Define the sequence of years in our dataset
+# CROP PARAMETER. 
 # These are potato specific years
 year = seq(from = 1981, to = 2016);
-# Define the sequence of years over which we make predictions in our dataset
+# Define the subsequence of years from year over which we make predictions in our dataset
 pred.year = seq(from=23, to=36)
 
 
@@ -17,38 +19,44 @@ RMSE = function(m, o){
 sqrt(mean((m - o)^2))
 }
 
+# There are numberYears years from 2003 to lastTestingYear
+firstTestingYear <- 2003
+lastTestingYear <- year[length(year)]
+numberYears <- lastTestingYear - firstTestingYear + 1
 
 
 
-# Once the yield predictions are made and stored into a csv entitled yield_prediction_csv
-# Calculate the RMSEs for these yield predictions and store them into the file rmse_csv
-
+# Once the yield predictions are made and stored into a csv entitled yield_prediction_csv,
+# calculate the RMSEs for these yield predictions and store them into the file rmse_csv
 calculateRMSE = function(yield_prediction_csv,rmse_csv)
 {
-    # In[7]:
 
     results <- read.csv(yield_prediction_csv)
 
     # In the  columns that belong to the dataframe read from yield_prediction_csv, the yield predictions of the first model are stored at column index 8
     # Recall that what r refers to as index 8, python refers to as index 7
     firstModelIndex <- 8
+
+
     # Get the names of the various models whose yield predictions are stored in yield_prediction_csv
     model_names <- colnames(results[firstModelIndex:length(colnames(results))])
     # The yield predictions of the final model are stored at column index lastModelIndex
     lastModelIndex <- firstModelIndex + length(model_names) - 1
 
 
-    # There are 14 testing years from 2003 to 2016
-    numberYears <- 14
+
+
     # Make the matrix that stores the RMSE, for each testing year for each model 
     model_rmse_mat <- matrix(, nrow = numberYears, ncol = length(model_names))
 
 
-    for (i in 1:numberYears){
-        # Print year - 2012 (for year in 2003 to 2016) to the console for our convenience
-        print(i)
+    for (year_idx in 1:numberYears){
+        # Print year - 2012 (for year in 2003 to lastTestingYear) to the console for our convenience
+        print(year_idx)
         # Get the test year
-        test.year = year[pred.year[i]]
+        test.year = year[pred.year[year_idx]]
+
+
         # In the columns that belong to the dataframe read from yield_prediction_csv, the years belonging to each entry are stored in yearIndex
         yearIndex <- 2
         # Get the portion of yield_prediction_csv whose years belong to data.test
@@ -65,7 +73,7 @@ calculateRMSE = function(yield_prediction_csv,rmse_csv)
             data.test.copy = data.test[!is.na(data.test[,model_string]),]
             data.test.copy = data.test.copy[!is.na(data.test.copy[,"yield"]),]
             # Calculate the RMSE
-            model_rmse_mat[i,indexInModelNames] <- RMSE(data.test.copy$"yield", data.test.copy[,model_string])
+            model_rmse_mat[year_idx, indexInModelNames] <- RMSE(data.test.copy$"yield", data.test.copy[,model_string])
         }
     }
 
@@ -87,12 +95,14 @@ calculateRMSE = function(yield_prediction_csv,rmse_csv)
 
 initialize = function()
 {
-    # In[3]:
 
+    # CROP PARAMETER
     mydata <- read.csv("../dataFiles/potato_with_anomaly.csv")
+    #mydata <- read.csv("../dataFiles/tomato_with_anomaly.csv")
+
 
     # Suppose that you wanted to scale the dataset in some way before working with it.
-    # To do so, we first store in a vector boolean values that indicate whether a column in mydata is true or false
+    # To do so, we first store in a vector boolean values that indicate whether a column in mydata is true or false. What does it mean for a column to be True or False?
     # If mydata has columns A,B,C,D and only D is numeric, then A,B and C will be False and D will be True
 
     # If we want any numeric column to not be scaled, we then replace its boolean value with FALSE
@@ -108,11 +118,14 @@ initialize = function()
     #mydata[ind] <- scale(mydata[ind])
     
 
+    # CROP PARAMETER
     # The states that follow are those states that belong to potato
     all_states <- c('COLORADO', 'IDAHO', 'MAINE', 'MINNESOTA', 'MONTANA', 'OREGON',
      'WISCONSIN', 'WASHINGTON', 'PENNSYLVANIA', 'NORTH DAKOTA',
      'ARIZONA', 'NEW JERSEY', 'NORTH CAROLINA', 'ALABAMA', 'MICHIGAN',
      'NEW MEXICO', 'UTAH', 'VIRGINIA')
+    # The states that follow are those states that belong to tomato
+    #all_states <- c('CALIFORNIA','OHIO')
 
 
 
@@ -121,16 +134,14 @@ initialize = function()
     mydata$State = as.factor(mydata$State)
 
 
-
-    train_region <- all_states
-    test_region <- all_states
-
-
     # Give names to the CSVs in which we will, firstly, store the results of predictions and, secondly, in which we will store the RMSEs that we calculate for these
     # predictions.
 
+    # CROP_PARAMETER
     yield_prediction_csv_1 <- "./yan_combinations_potato.csv"
     rmse_csv_1 <- "./yan_combinations_potato_rmse.csv"
+    #yield_prediction_csv_1 <- "./yan_combinations_tomato.csv"
+    #rmse_csv_1 <- "./yan_combinations_tomato_rmse.csv"
 
     # Specify the model formulas that we wish to test
     model_formulas_1 <- c(
@@ -168,7 +179,7 @@ initialize = function()
     # Each of the following list suffixed variables is a list that stores as many variables as model experiments that we want to run
     # By model experiment, I refer to the collection of model configurations that one wants to test in one run of this code.
     # For example, we may wish to test model configurations using precip in one run and then model configurations using tave in another run
-    # The model configurations, within the model experiment, using precip may be yield ~ precip5 + precip6 + precip7 + FIPS or yield ~ precip6 + precip7 + precip8 + FIPS
+    # The model configurations, within the model experiment, using precip may be (for example) yield ~ precip5 + precip6 + precip7 + FIPS or yield ~ precip6 + precip7 + precip8 + FIPS
 
     yield_prediction_csv_list <- list(yield_prediction_csv_1)
     rmse_csv_list <- list(rmse_csv_1)
@@ -206,40 +217,40 @@ initialize = function()
             stop("The length of model_formulas != length of model_names")
         }
 
-        for (j in 1:length(model_formulas))
+        for (model_idx in 1:length(model_formulas))
         {
             # Get the start time for a particular model_formula
             startTime <- Sys.time()
-            print(model_names[j])
+            print(model_names[model_idx])
             # These are potato specific years
-            endYear <- 2016
-            startYear <- 1981
-            for (i in 1:14){
+            endYear <- year[length(year)]
+            startYear <- year[1]
+            for (year_idx in 1:numberYears){
 
-                # v is the vector of years across which we will train our data
-                if (i == 1)
+                # training_years is the vector of years across which we will train our data
+                if (year_idx == 1)
                 {
-                    v <- c(1981:2002, 2004:endYear)
+                    training_years <- c(startYear:2002, 2004:endYear)
                 }
 
-                else if (i == 14)
+                else if (year_idx == numberYears)
                 {
-                    v <- startYear:year[pred.year[i-1]]
+                    training_years <- startYear:year[pred.year[year_idx-1]]
                 }
 
                 else
                 {
-                    v <- c(startYear:year[pred.year[i-1]], year[pred.year[i+1]]:endYear)
+                    training_years <- c(startYear:year[pred.year[year_idx-1]], year[pred.year[year_idx+1]]:endYear)
                 }
 
 
-                print(i)
-                print(v)
-                train.year <- v
-                test.year = year[pred.year[i]]
+                print(year_idx)
+                print(training_years)
+                training_years <- training_years
+                test.year = year[pred.year[year_idx]]
 
                 #data.train is the data frame containing the data with which we can possibly make our prediction
-                data.train = mydata[!(mydata$"year" %in% year[pred.year[i]]),]
+                data.train = mydata[!(mydata$"year" %in% year[pred.year[year_idx]]),]
                 print(dim(data.train))
 
 
@@ -249,13 +260,13 @@ initialize = function()
 
                 # If the models use evi or lst, then refine the training and testing data frames to exclude those values
                 # such that evi or lst is null
-                if (uses_evi[j] == "Y")
+                if (uses_evi[model_idx] == "Y")
                 {
                     data.train <- data.train[!is.na(data.train$"evi5"),]
                     data.test <- data.test[!is.na(data.test$"evi5"),]
                 }
 
-                if (uses_lstmax[j] == "Y")
+                if (uses_lstmax[model_idx] == "Y")
                 {
                     data.train <- data.train[!is.na(data.train$"lstmax5"),]
                     data.test <- data.test[!is.na(data.test$"lstmax5"),]
@@ -274,20 +285,20 @@ initialize = function()
 
                 model_function <- NULL
 
-                if (fitting_functions[j] == "lm")
+                if (fitting_functions[model_idx] == "lm")
                 {
-                    model_function <- lm(as.formula(model_formulas[j]), data=data.train)
+                    model_function <- lm(as.formula(model_formulas[model_idx]), data=data.train)
 
                 }
-                else if (fitting_functions[j] == "lmer")
+                else if (fitting_functions[model_idx] == "lmer")
                 {
-                    model_function <- lmer(as.formula(model_formulas[j]), data=data.train, control = lmerControl(optimizer ="Nelder_Mead"))
+                    model_function <- lmer(as.formula(model_formulas[model_idx]), data=data.train, control = lmerControl(optimizer ="Nelder_Mead"))
                 }
 
 
                 # We want the testing data frame to only include those entries whose FIPS codes also occurred in the training data frame
                 # We additionally want those FIPS codes that not only occurred in the training data frame but whose yield entries were not null
-                if (uses_FIPS[j] == "Y")
+                if (uses_FIPS[model_idx] == "Y")
                 {
                     non_na_entries <- data.train[!(is.na(data.train$'yield')),]
                     data.test <- data.test[data.test$"FIPS" %in% non_na_entries$"FIPS",]
@@ -297,7 +308,7 @@ initialize = function()
 
                 # For the final year involved in prediction, we save some attributes. For example, we store the 
                 # coefficients that the fitted function has and we make some diagnostic plots as well
-                if (i == 14)
+                if (year_idx == 14)
                 {
                     s <- capture.output(summary(model_function))
                     coeff <- capture.output(coef(model_function))
@@ -306,12 +317,12 @@ initialize = function()
                     csv_name <- substr(csv_name, 3, nchar(csv_name)) 
                     #csv_name <- substr(csv_name, 1, nchar(csv_name) - 4)
                     print(csv_name)
-                    write(s, paste0('./coefficients_', csv_name, model_names[j],'.txt'), append=TRUE)
-                    write("\n_________________\n",paste0('./coefficients_', csv_name, model_names[j],'.txt'), append=TRUE)
-                    write(coeff, paste0('./coefficients_', csv_name, model_names[j],'.txt'), append=TRUE)
-                    write("\n_________________\n",paste0('./coefficients_', csv_name, model_names[j],'.txt'), append=TRUE)
-                    write(coeff_mean, paste0('./coefficients_', csv_name, model_names[j],'.txt'), append=TRUE)
-                    theFile <-  paste0(model_names[j], "%03d.png")
+                    write(s, paste0('./coefficients_', csv_name, model_names[model_idx],'.txt'), append=TRUE)
+                    write("\n_________________\n",paste0('./coefficients_', csv_name, model_names[model_idx],'.txt'), append=TRUE)
+                    write(coeff, paste0('./coefficients_', csv_name, model_names[model_idx],'.txt'), append=TRUE)
+                    write("\n_________________\n",paste0('./coefficients_', csv_name, model_names[model_idx],'.txt'), append=TRUE)
+                    write(coeff_mean, paste0('./coefficients_', csv_name, model_names[model_idx],'.txt'), append=TRUE)
+                    theFile <-  paste0(model_names[model_idx], "%03d.png")
                     png(filename=theFile)
                     plot(model_function,ask=FALSE)
                     dev.off()
@@ -340,17 +351,22 @@ initialize = function()
 
 
 
+            # CROP PARAMETER
+            # You need to change the testing years and prediction years in the code below depending to include as many entries as there are years of data past 2003 for a particular crop. For example, tomato data runs from 2003 to 2017, whereas potato data runs from 2000 to 2016.
             # Make one data frame by binding together the test data frames from 2003 to 2016
             allTestData <- rbind.data.frame(data.test2003,data.test2004,data.test2005,data.test2006,data.test2007,data.test2008, data.test2009, data.test2010, data.test2011, data.test2012, data.test2013, data.test2014, data.test2015, data.test2016)
 
+            # CROP PARAMETER
             # Make one vector by binding together the results of predicting on test data frames from 2003 to 2016
-            predictions[[j]] <- c(func.pred2003,func.pred2004,func.pred2005,func.pred2006,func.pred2007,func.pred2008, func.pred2009, func.pred2010, func.pred2011, func.pred2012, func.pred2013, func.pred2014, func.pred2015, func.pred2016)
-            predictionFrame <- data.frame(predictions[[j]])
-            # Combine the predictionFrame data frame with allTestData's data frame and then save it with the name model_name[j]
+            predictions[[model_idx]] <- c(func.pred2003,func.pred2004,func.pred2005,func.pred2006,func.pred2007,func.pred2008, func.pred2009, func.pred2010, func.pred2011, func.pred2012, func.pred2013, func.pred2014, func.pred2015, func.pred2016)
+            predictionFrame <- data.frame(predictions[[model_idx]])
+
+
+            # Combine the predictionFrame data frame with allTestData's data frame and then save it with the name model_name[model_idx]
             # This is done because if this code executes to completion, then it saves a dataframe containing the prediction results for all tested models in the model
             # experiment; if the code fails to execute to completion however, failing at some model within the model experiment, then all previous models will have
             # been saved. Each of the previous models will have been saved to a data frame whose data frame name is the model name
-            write.csv(data.frame(predictionFrame, allTestData), model_names[[j]])
+            write.csv(data.frame(predictionFrame, allTestData), model_names[[model_idx]])
             endTime <- Sys.time()
             print(endTime - startTime)
 
@@ -368,9 +384,6 @@ initialize = function()
 
 
 
-        # In[6]:
-
-        #
         basic_data <- c("year","State","FIPS","yield_ana", "yield", "area")
         desired_data <- c(basic_data, model_names)
         yield_prediction <- subset(allData, select = desired_data)
@@ -409,6 +422,5 @@ initialize = function()
 }
 
 # Main method
-
 options(warn=1)
 initialize()
